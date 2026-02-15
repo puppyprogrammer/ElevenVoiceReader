@@ -10,7 +10,6 @@
     "scripting"
   ],
   "host_permissions": [
-    "<all_urls>",
     "https://api.elevenlabs.io/*"
   ],
   "background": {
