@@ -19,17 +19,25 @@ chrome.runtime.onStartup.addListener(createContextMenu);
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   console.log('**Background: Menu clicked**', info.menuItemId, 'text length:', info.selectionText?.length, 'tab:', tab.id);
-  
+
   if (info.menuItemId === 'brave-voice-reader') {
     try {
       const text = info.selectionText.trim();
       console.log('**Dispatching TTS**', text.substring(0, 50) + '...');
-      
-      chrome.tabs.sendMessage(tab.id, {
-        action: 'initiateTTS',
-        text
+
+      // Inject content script into the active tab
+      chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['src/content.js']
+      }).then(() => {
+        console.log('**Content script injected**');
+        // Now send the message
+        return chrome.tabs.sendMessage(tab.id, {
+          action: 'initiateTTS',
+          text
+        });
       }).then(() => console.log('**Message sent success**'))
-        .catch(err => console.error('**Send message failed**', err));
+        .catch(err => console.error('**Injection or message failed**', err));
     } catch (error) {
       console.error('**Dispatch error**', error);
     }
