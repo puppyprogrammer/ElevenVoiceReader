@@ -346,6 +346,270 @@ function showApiKeyPrompt(callback) {
   };
 }
 
+// Settings Modal for editing API key and voice
+async function showSettingsModal() {
+  // Get current settings
+  const settings = await getSettings(['apiKey', 'voiceId']);
+  const currentApiKey = settings.apiKey || '';
+  const currentVoiceId = settings.voiceId || '';
+
+  // Inject CSS
+  const css = `
+    .settings-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .settings-modal .modal-content {
+      background: rgba(28, 28, 30, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(142, 142, 147, 0.3);
+      padding: 24px;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 90%;
+      color: #f2f2f7;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .settings-modal h3 {
+      margin: 0 0 16px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #f2f2f7;
+    }
+
+    .settings-modal .form-group {
+      margin-bottom: 16px;
+    }
+
+    .settings-modal label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #98989d;
+    }
+
+    .settings-modal input,
+    .settings-modal select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid rgba(142, 142, 147, 0.3);
+      border-radius: 6px;
+      background: rgba(44, 44, 46, 0.95);
+      color: #f2f2f7;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    .settings-modal input:focus,
+    .settings-modal select:focus {
+      outline: none;
+      border-color: #4a9eff;
+      box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+    }
+
+    .settings-modal .buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .settings-modal button {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .settings-modal .test-btn {
+      background: rgba(74, 158, 255, 0.1);
+      color: #4a9eff;
+      border: 1px solid rgba(74, 158, 255, 0.3);
+    }
+
+    .settings-modal .test-btn:hover {
+      background: rgba(74, 158, 255, 0.2);
+    }
+
+    .settings-modal .save-btn {
+      background: #34c759;
+      color: white;
+    }
+
+    .settings-modal .save-btn:hover {
+      background: #28a745;
+    }
+
+    .settings-modal .cancel-btn {
+      background: rgba(142, 142, 147, 0.1);
+      color: #98989d;
+    }
+
+    .settings-modal .cancel-btn:hover {
+      background: rgba(142, 142, 147, 0.2);
+      color: #f2f2f7;
+    }
+
+    .settings-modal .status-message {
+      margin-top: 12px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .settings-modal .status-success {
+      background: rgba(52, 199, 89, 0.1);
+      color: #34c759;
+      border: 1px solid rgba(52, 199, 89, 0.3);
+    }
+
+    .settings-modal .status-error {
+      background: rgba(255, 59, 48, 0.1);
+      color: #ff3b30;
+      border: 1px solid rgba(255, 59, 48, 0.3);
+    }
+  `;
+
+  const style = document.createElement('style');
+  style.textContent = css;
+  document.head.appendChild(style);
+
+  const modal = document.createElement('div');
+  modal.className = 'settings-modal';
+
+  // Get voices for the dropdown
+  let voices = [];
+  try {
+    if (currentApiKey) {
+      voices = await fetchVoices(currentApiKey);
+    }
+  } catch (error) {
+    console.log('Could not fetch voices:', error);
+  }
+
+  modal.innerHTML = `
+    <div class="modal-content">
+      <h3>Settings</h3>
+
+      <div class="form-group">
+        <label for="apiKeyInput">ElevenLabs API Key</label>
+        <input type="password" id="apiKeyInput" value="${currentApiKey}" placeholder="Enter your API key">
+      </div>
+
+      <div class="form-group">
+        <label for="voiceSelect">Voice</label>
+        <select id="voiceSelect">
+          <option value="">Select a voice</option>
+          ${voices.map(voice => `<option value="${voice.voice_id}" ${voice.voice_id === currentVoiceId ? 'selected' : ''}>${voice.name}</option>`).join('')}
+        </select>
+      </div>
+
+      <div id="statusMessage"></div>
+
+      <div class="buttons">
+        <button class="test-btn" id="testBtn">Test API</button>
+        <button class="save-btn" id="saveBtn">Save</button>
+        <button class="cancel-btn" id="cancelBtn">Cancel</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const apiKeyInput = modal.querySelector('#apiKeyInput');
+  const voiceSelect = modal.querySelector('#voiceSelect');
+  const testBtn = modal.querySelector('#testBtn');
+  const saveBtn = modal.querySelector('#saveBtn');
+  const cancelBtn = modal.querySelector('#cancelBtn');
+  const statusMessage = modal.querySelector('#statusMessage');
+
+  // Test API functionality
+  testBtn.onclick = async () => {
+    const apiKey = apiKeyInput.value.trim();
+    if (!apiKey) {
+      showStatus('Please enter an API key', 'error');
+      return;
+    }
+
+    testBtn.disabled = true;
+    testBtn.textContent = 'Testing...';
+
+    try {
+      const testVoices = await fetchVoices(apiKey);
+      showStatus('API key is valid!', 'success');
+
+      // Update voice dropdown with fetched voices
+      voiceSelect.innerHTML = `
+        <option value="">Select a voice</option>
+        ${testVoices.map(voice => `<option value="${voice.voice_id}" ${voice.voice_id === voiceSelect.value ? 'selected' : ''}>${voice.name}</option>`).join('')}
+      `;
+    } catch (error) {
+      showStatus(`API test failed: ${error.message}`, 'error');
+    } finally {
+      testBtn.disabled = false;
+      testBtn.textContent = 'Test API';
+    }
+  };
+
+  // Save settings
+  saveBtn.onclick = async () => {
+    const apiKey = apiKeyInput.value.trim();
+    const voiceId = voiceSelect.value;
+
+    if (!apiKey) {
+      showStatus('Please enter an API key', 'error');
+      return;
+    }
+
+    if (!voiceId) {
+      showStatus('Please select a voice', 'error');
+      return;
+    }
+
+    try {
+      await setSettings({ apiKey, voiceId });
+      showStatus('Settings saved successfully!', 'success');
+
+      // Close modal after a short delay
+      setTimeout(() => {
+        modal.remove();
+        style.remove();
+      }, 1500);
+    } catch (error) {
+      showStatus('Failed to save settings', 'error');
+    }
+  };
+
+  // Cancel
+  cancelBtn.onclick = () => {
+    modal.remove();
+    style.remove();
+  };
+
+  function showStatus(message, type) {
+    statusMessage.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+    setTimeout(() => {
+      statusMessage.innerHTML = '';
+    }, 3000);
+  }
+}
+
 async function getApiKey() {
   return new Promise((resolve) => {
     showApiKeyPrompt((result) => resolve(result));
@@ -425,7 +689,7 @@ function showReadingUI(text, isLoading = false, savedVolume = 1, savedSpeed = 1,
     };
     readingUI.querySelector('#settingsBtn').onclick = () => {
       console.log('**Settings button pressed**');
-      chrome.runtime.openOptionsPage();
+      showSettingsModal();
     };
     readingUI.querySelector('#playStopBtn').onclick = () => {
       const playStopBtn = readingUI.querySelector('#playStopBtn');
