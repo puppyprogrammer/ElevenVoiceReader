@@ -299,7 +299,7 @@
 }
 
 #elevenvoicereader-ui .progress-segment.playing {
-  background: linear-gradient(90deg, #ff9500, #ff3b30);
+  background: linear-gradient(90deg, #8e44ad, #9b59b6);
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
