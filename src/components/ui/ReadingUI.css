@@ -99,6 +99,27 @@
   margin: 0;
 }
 
+#elevenvoicereader-ui .header-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+#elevenvoicereader-ui .settings-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--medium-text);
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+#elevenvoicereader-ui .settings-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--light-text);
+}
+
 #elevenvoicereader-ui .close-btn {
   background: none;
   border: none;

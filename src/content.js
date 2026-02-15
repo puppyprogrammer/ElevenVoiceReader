@@ -384,7 +384,10 @@ function showReadingUI(text, isLoading = false, savedVolume = 1, savedSpeed = 1,
           <img class="elf-hat-icon" src="${chrome.runtime.getURL('icons/icon-16.png')}" width="16" height="16" alt="Elf Hat">
           <span class="title">ElevenVoiceReader</span>
         </div>
-        <button class="close-btn" id="closeBtn">×</button>
+        <div class="header-buttons">
+          <button class="settings-btn" id="settingsBtn" title="Settings">⚙️</button>
+          <button class="close-btn" id="closeBtn">×</button>
+        </div>
       </div>
       <div class="content">
         ${isChunked ? '<div class="queue-progress"><div class="progress-bar" id="progressBar"></div><div class="progress-text" id="progressText">Starting playback...</div></div>' : ''}
@@ -419,6 +422,10 @@ function showReadingUI(text, isLoading = false, savedVolume = 1, savedSpeed = 1,
       console.log('**Close button pressed**');
       stopAllAudio();
       hideReadingUI(false); // Audio already stopped
+    };
+    readingUI.querySelector('#settingsBtn').onclick = () => {
+      console.log('**Settings button pressed**');
+      chrome.runtime.openOptionsPage();
     };
     readingUI.querySelector('#playStopBtn').onclick = () => {
       const playStopBtn = readingUI.querySelector('#playStopBtn');
