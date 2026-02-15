@@ -19,6 +19,10 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 10000;
+  min-width: 500px;
+  min-height: 350px;
+  max-width: 90vw;
+  max-height: 80vh;
   width: 500px;
   height: 350px;
   background: var(--dark-bg);
@@ -31,6 +35,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  resize: both;
 }
 
 #elevenvoicereader-ui .loading {
@@ -228,9 +233,8 @@
   background: var(--darker-bg);
   border-top: 1px solid var(--border-color);
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  gap: 4px;
 }
 
 #elevenvoicereader-ui #cancelBtn {
