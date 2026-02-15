@@ -1,4 +1,8 @@
-# ElevenVoiceReader
+# 🧝 ElevenVoiceReader
+
+<p align="center">
+  <img src="icons/icon-128.png" alt="ElevenVoiceReader Hat Icon" width="128" height="128">
+</p>
 
 A professional Chrome/Brave extension that transforms selected text into natural, human-like speech using ElevenLabs' advanced AI voice synthesis technology. Perfect for accessibility, content consumption, and productivity.
 
