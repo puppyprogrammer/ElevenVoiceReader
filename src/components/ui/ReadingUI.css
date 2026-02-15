@@ -269,18 +269,38 @@
 
 #elevenvoicereader-ui .progress-bar {
   width: 100%;
-  height: 6px;
+  height: 20px;
   background: var(--darker-bg);
   border-radius: 3px;
-  overflow: hidden;
+  display: flex;
   margin-bottom: 8px;
+  overflow: hidden;
 }
 
-#elevenvoicereader-ui .progress-fill {
-  height: 100%;
+#elevenvoicereader-ui .progress-segment {
+  flex: 1;
+  background: var(--darker-bg);
+  border-right: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+#elevenvoicereader-ui .progress-segment:last-child {
+  border-right: none;
+}
+
+#elevenvoicereader-ui .progress-segment:hover {
+  background: rgba(74, 158, 255, 0.2);
+}
+
+#elevenvoicereader-ui .progress-segment.processed {
   background: linear-gradient(90deg, var(--primary-color), var(--success-color));
-  border-radius: 3px;
-  transition: width 0.3s ease;
+}
+
+#elevenvoicereader-ui .progress-segment.playing {
+  background: linear-gradient(90deg, #ff9500, #ff3b30);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
 #elevenvoicereader-ui .progress-text {
