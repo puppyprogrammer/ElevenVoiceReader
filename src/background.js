@@ -25,19 +25,32 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       const text = info.selectionText.trim();
       console.log('**Dispatching TTS**', text.substring(0, 50) + '...');
 
-      // Inject content script into the active tab
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ['src/content.js']
+      // First try to send message to see if content script is already loaded
+      chrome.tabs.sendMessage(tab.id, {
+        action: 'ping'
       }).then(() => {
-        console.log('**Content script injected**');
-        // Now send the message
+        console.log('**Content script already loaded, sending TTS**');
+        // Content script is loaded, send the TTS message
         return chrome.tabs.sendMessage(tab.id, {
           action: 'initiateTTS',
           text
         });
+      }).catch(() => {
+        console.log('**Content script not loaded, injecting...**');
+        // Content script not loaded, inject it
+        return chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['src/content.js']
+        }).then(() => {
+          console.log('**Content script injected**');
+          // Now send the message
+          return chrome.tabs.sendMessage(tab.id, {
+            action: 'initiateTTS',
+            text
+          });
+        });
       }).then(() => console.log('**Message sent success**'))
-        .catch(err => console.error('**Injection or message failed**', err));
+        .catch(err => console.error('**Operation failed**', err));
     } catch (error) {
       console.error('**Dispatch error**', error);
     }

@@ -2,12 +2,40 @@
 
 console.log('**Content script loaded**');
 
-// Audio globals
-let currentAudio = null;
-let audioBlobUrl = null;
+// Load content CSS
+const contentCssLink = document.createElement('link');
+contentCssLink.rel = 'stylesheet';
+contentCssLink.href = chrome.runtime.getURL('src/content.css');
+document.head.appendChild(contentCssLink);
 
+// Audio globals
+let currentAudio = null; // Keep for compatibility
+let audioBlobUrl = null;
+let currentBlob = null; // For restarting single audio
+
+// Web Audio API globals for real-time volume and speed control
+let audioContext = null;
+let currentBufferSource = null;
+let currentGain = null;
+let currentAudioBuffer = null;
+
+// Current slider values (used when audio is null)
+let currentVolume = 1;
+let currentSpeed = 1;
+// Playback state
+let isPlaying = false;
+let isStopping = false; // Flag to prevent auto-advancing when manually stopped
 // UI globals
 let readingUI = null;
+
+// Queue globals for chunked reading
+let readingQueue = {
+  chunks: [],
+  currentIndex: 0,
+  status: 'idle', // 'idle', 'processing', 'playing', 'paused', 'error'
+  audioBuffers: [],
+  processingIndex: 0
+};
 
 // Chrome storage utilities
 async function getSettings(keys) {
@@ -19,30 +47,42 @@ async function setSettings(settings) {
 }
 
 // Audio utilities
-function playAudio(blob, text, showReadingUI, hideReadingUI, savedVolume = 1, savedSpeed = 1) {
+async function playAudio(blob, text, showReadingUI, hideReadingUI, savedVolume = 1, savedSpeed = 1, skipUI = false) {
   stopAudio(hideReadingUI);
-  audioBlobUrl = URL.createObjectURL(blob);
-  currentAudio = new Audio(audioBlobUrl);
-  currentAudio.volume = savedVolume;
-  currentAudio.playbackRate = savedSpeed;
+  currentBlob = blob; // Store for restarting
 
-  // Upgrade UI to full controls
-  showReadingUI(text, false, savedVolume, savedSpeed);
+  // Initialize Web Audio API
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
 
-  currentAudio.addEventListener('play', () => {
-    // Update button to show stop icon when audio starts playing
-    if (readingUI) {
-      const playStopBtn = readingUI.querySelector('#playStopBtn');
-      if (playStopBtn) {
-        playStopBtn.textContent = '⏹';
-        playStopBtn.title = 'Stop';
-      }
-    }
-  });
+  // Decode audio blob to AudioBuffer
+  const arrayBuffer = await blob.arrayBuffer();
+  currentAudioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-  currentAudio.addEventListener('ended', () => {
+  // Create audio buffer source node
+  currentBufferSource = audioContext.createBufferSource();
+  currentBufferSource.buffer = currentAudioBuffer;
+
+  // Create gain node for volume control
+  currentGain = audioContext.createGain();
+
+  // Initialize globals if not set
+  if (typeof currentVolume === 'undefined') currentVolume = savedVolume;
+  if (typeof currentSpeed === 'undefined') currentSpeed = savedSpeed;
+
+  currentGain.gain.value = currentVolume;
+  currentBufferSource.playbackRate.value = currentSpeed;
+
+  // Connect audio graph: source -> gain -> destination
+  currentBufferSource.connect(currentGain);
+  currentGain.connect(audioContext.destination);
+
+  // Add event listeners
+  currentBufferSource.addEventListener('ended', () => {
     console.log('**Audio ended**');
-    // Update button to show play icon when audio ends (since it's now stopped)
+    isPlaying = false;
+    // Update button to show play icon when audio ends
     if (readingUI) {
       const playStopBtn = readingUI.querySelector('#playStopBtn');
       if (playStopBtn) {
@@ -50,52 +90,96 @@ function playAudio(blob, text, showReadingUI, hideReadingUI, savedVolume = 1, sa
         playStopBtn.title = 'Play';
       }
     }
-    // Clean up audio when it ends naturally
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
-    }
-    if (audioBlobUrl) {
-      URL.revokeObjectURL(audioBlobUrl);
-      audioBlobUrl = null;
-    }
-    currentAudio = null;
+    // Clean up
+    currentBufferSource = null;
+    currentGain = null;
+    currentAudioBuffer = null;
   });
 
-  currentAudio.addEventListener('pause', () => {
-    // Update button to show play icon when audio is paused/stopped
-    if (readingUI) {
-      const playStopBtn = readingUI.querySelector('#playStopBtn');
-      if (playStopBtn) {
-        playStopBtn.textContent = '▶';
-        playStopBtn.title = 'Play';
-      }
+  // Start playback
+  currentBufferSource.start(0);
+  isPlaying = true;
+  isStopping = false; // Reset stopping flag when starting
+
+  // Show UI only if not skipping
+  if (!skipUI) {
+    showReadingUI(text, false, savedVolume, savedSpeed);
+  }
+
+  // Update button to show stop icon after UI is shown
+  if (readingUI) {
+    const playStopBtn = readingUI.querySelector('#playStopBtn');
+    if (playStopBtn) {
+      console.log('**Setting button to stop icon**');
+      playStopBtn.textContent = '⏹';
+      playStopBtn.title = 'Stop';
+    } else {
+      console.log('**PlayStopBtn not found**');
     }
-  });
-
-  currentAudio.addEventListener('error', (e) => {
-    console.error('**Audio error**:', e);
-    stopAudio(hideReadingUI, true); // true = destroy audio on error
-  });
-
-  currentAudio.play().catch(console.error);
+  } else {
+    console.log('**readingUI not set**');
+  }
 }
 
 function stopAudio(hideReadingUI, destroyAudio = true) {
-  console.log('**stopAudio called** - currentAudio:', currentAudio, 'destroy:', destroyAudio);
-  if (currentAudio) {
-    console.log('**Pausing audio**');
-    currentAudio.pause();
-    currentAudio.currentTime = 0;
+  console.log('**stopAudio called** - currentBufferSource:', currentBufferSource, 'destroy:', destroyAudio);
+  if (currentBufferSource) {
+    console.log('**Stopping audio**');
+    try {
+      currentBufferSource.stop();
+    } catch (e) {
+      // Already stopped
+    }
+    isPlaying = false;
     if (destroyAudio) {
-      // Only destroy audio when ending naturally or on error
+      currentBufferSource = null;
+      currentGain = null;
+      currentAudioBuffer = null;
       if (audioBlobUrl) {
         URL.revokeObjectURL(audioBlobUrl);
         audioBlobUrl = null;
       }
-      currentAudio = null;
     }
-    // If not destroying, keep audio for potential restart
+  }
+}
+
+// Complete stop - clears queue and stops all audio
+function stopAllAudio() {
+  console.log('**stopAllAudio called**');
+  isStopping = true; // Prevent auto-advancing to next chunk
+
+  // Stop current audio playback
+  if (currentBufferSource) {
+    try {
+      currentBufferSource.stop();
+    } catch (e) {
+      // Already stopped
+    }
+  }
+
+  isPlaying = false;
+
+  // Clean up
+  currentBufferSource = null;
+  currentGain = null;
+  currentAudioBuffer = null;
+  if (audioBlobUrl) {
+    URL.revokeObjectURL(audioBlobUrl);
+    audioBlobUrl = null;
+  }
+
+  // Reset playback state but preserve chunks and audioBuffers for replay
+  readingQueue.currentIndex = 0;
+  readingQueue.processingIndex = readingQueue.audioBuffers.filter(b => b !== null).length;
+  readingQueue.status = 'idle';
+
+  // Update button to show play when stopped
+  if (readingUI) {
+    const playStopBtn = readingUI.querySelector('#playStopBtn');
+    if (playStopBtn) {
+      playStopBtn.textContent = '▶';
+      playStopBtn.title = 'Play';
+    }
   }
 }
 
@@ -152,141 +236,6 @@ async function fetchVoices(apiKey) {
 
 // API Key Prompt Modal
 function showApiKeyPrompt(callback) {
-  // Inject CSS
-  const css = `.api-key-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 10001;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  }
-
-  .api-key-modal .modal-content {
-    background: rgba(28, 28, 30, 0.95);
-    backdrop-filter: blur(20px);
-    padding: 24px;
-    border-radius: 12px;
-    max-width: 420px;
-    text-align: center;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    border: 1px solid rgba(142, 142, 147, 0.3);
-  }
-
-  .api-key-modal h3 {
-    margin-top: 0;
-    color: #f2f2f7;
-    font-weight: 600;
-    font-size: 18px;
-  }
-
-  .api-key-modal p {
-    margin: 12px 0;
-    color: #98989d;
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
-  .api-key-modal a {
-    color: #4a9eff;
-    text-decoration: none;
-  }
-
-  .api-key-modal a:hover {
-    text-decoration: underline;
-  }
-
-  .api-key-modal input {
-    width: 100%;
-    padding: 12px;
-    margin: 12px 0;
-    border: 1px solid rgba(142, 142, 147, 0.3);
-    border-radius: 6px;
-    box-sizing: border-box;
-    font-size: 14px;
-    background: rgba(44, 44, 46, 0.95);
-    color: #f2f2f7;
-    transition: border-color 0.2s;
-  }
-
-  .api-key-modal input:focus {
-    outline: none;
-    border-color: #4a9eff;
-  }
-
-  .api-key-modal select {
-    width: 100%;
-    padding: 12px;
-    margin: 12px 0;
-    border: 1px solid rgba(142, 142, 147, 0.3);
-    border-radius: 6px;
-    box-sizing: border-box;
-    font-size: 14px;
-    background: rgba(44, 44, 46, 0.95);
-    color: #f2f2f7;
-    transition: border-color 0.2s;
-  }
-
-  .api-key-modal select:focus {
-    outline: none;
-    border-color: #4a9eff;
-  }
-
-  .api-key-modal .buttons {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 20px;
-  }
-
-  .api-key-modal button {
-    padding: 10px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s;
-    min-width: 80px;
-  }
-
-  .api-key-modal button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  }
-
-  .api-key-modal #submitKey {
-    background: #4a9eff;
-    color: white;
-  }
-
-  .api-key-modal #cancelKey {
-    background: #8e8e93;
-    color: white;
-  }
-
-  .api-key-modal #saveSettings {
-    background: #34c759;
-    color: white;
-  }
-
-  .api-key-modal #backKey {
-    background: #8e8e93;
-    color: white;
-  }
-
-  .api-key-modal .loading {
-    margin: 12px 0;
-    color: #f2f2f7;
-  }`;
-  const style = document.createElement('style');
-  style.textContent = css;
-  document.head.appendChild(style);
 
   const modal = document.createElement('div');
   modal.className = 'api-key-modal';
@@ -336,7 +285,6 @@ function showApiKeyPrompt(callback) {
         const voiceId = modal.querySelector('#voiceSelect').value;
         if (!voiceId) return;
         modal.remove();
-        style.remove();
         callback({ apiKey, voiceId });
       };
 
@@ -355,7 +303,6 @@ function showApiKeyPrompt(callback) {
         modal.querySelector('#submitKey').onclick = modal.querySelector('#submitKey').onclick;
         modal.querySelector('#cancelKey').onclick = () => {
           modal.remove();
-          style.remove();
           callback(null);
         };
       };
@@ -383,13 +330,11 @@ function showApiKeyPrompt(callback) {
         modal.querySelector('#submitKey').onclick = modal.querySelector('#submitKey').onclick;
         modal.querySelector('#cancelKey').onclick = () => {
           modal.remove();
-          style.remove();
           callback(null);
         };
       };
       modal.querySelector('#cancelKey').onclick = () => {
         modal.remove();
-        style.remove();
         callback(null);
       };
     }
@@ -397,7 +342,6 @@ function showApiKeyPrompt(callback) {
 
   modal.querySelector('#cancelKey').onclick = () => {
     modal.remove();
-    style.remove();
     callback(null);
   };
 }
@@ -409,15 +353,15 @@ async function getApiKey() {
 }
 
 // Reading UI Component
-function showReadingUI(text, isLoading = false, savedVolume = 1, savedSpeed = 1) {
-  hideReadingUI();
+function showReadingUI(text, isLoading = false, savedVolume = 1, savedSpeed = 1, isChunked = false) {
+  hideReadingUI(false); // Don't stop audio when refreshing UI
 
   // Inject CSS
   // Inject external CSS file
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = chrome.runtime.getURL('src/components/ui/ReadingUI.css');
-  document.head.appendChild(link);
+  const readingUiCssLink = document.createElement('link');
+  readingUiCssLink.rel = 'stylesheet';
+  readingUiCssLink.href = chrome.runtime.getURL('src/components/ui/ReadingUI.css');
+  document.head.appendChild(readingUiCssLink);
 
   readingUI = document.createElement('div');
   readingUI.id = 'elevenvoicereader-ui';
@@ -443,11 +387,12 @@ function showReadingUI(text, isLoading = false, savedVolume = 1, savedSpeed = 1)
         <button class="close-btn" id="closeBtn">×</button>
       </div>
       <div class="content">
+        ${isChunked ? '<div class="queue-progress"><div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div><div class="progress-text" id="progressText">Starting playback...</div></div>' : ''}
         <div class="text-area">
           <textarea readonly>${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
         </div>
         <div class="controls-section">
-          <button id="playStopBtn" title="Play/Stop">▶</button>
+          <button id="playStopBtn" title="Play">▶</button>
           <div class="control-group">
             <label for="volumeSlider">Vol</label>
             <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="1">
@@ -470,52 +415,103 @@ function showReadingUI(text, isLoading = false, savedVolume = 1, savedSpeed = 1)
 
     // Event listeners
     const currentAudio = getCurrentAudio();
-    readingUI.querySelector('#closeBtn').onclick = hideReadingUI;
+    readingUI.querySelector('#closeBtn').onclick = () => {
+      console.log('**Close button pressed**');
+      stopAllAudio();
+      hideReadingUI(false); // Audio already stopped
+    };
     readingUI.querySelector('#playStopBtn').onclick = () => {
       const playStopBtn = readingUI.querySelector('#playStopBtn');
       if (!playStopBtn) return;
 
-      if (playStopBtn.textContent === '▶') {
-        // Button shows play, so try to play/restart audio
-        if (currentAudio) {
-          console.log('**Playing audio**');
-          currentAudio.play().catch(console.error);
-          // Event listener will update button to ⏹ when audio starts
-        } else {
-          console.log('**No audio to play**');
+      if (readingQueue.chunks.length > 1) {
+        // Chunked mode
+        if (playStopBtn.textContent === '⏹') {
+          // Stop button clicked - stop all and clear queue
+          console.log('**Stop button pressed (chunked mode)**');
+          stopAllAudio();
+          playStopBtn.textContent = '▶';
+          playStopBtn.title = 'Play';
+          updateQueueProgress();
+        } else if (playStopBtn.textContent === '▶') {
+          // Play button clicked - start from current chunk
+          console.log('**Play button pressed (chunked mode)**');
+          playNextChunk(savedVolume, savedSpeed);
         }
-      } else if (playStopBtn.textContent === '⏹') {
-        // Button shows stop, so pause audio (don't destroy)
-        console.log('**Stopping audio**');
-        stopAudio(hideReadingUI, false); // false = don't destroy audio
-        // Update button to show play immediately
-        playStopBtn.textContent = '▶';
-        playStopBtn.title = 'Play';
+      } else {
+        // Single chunk mode
+        if (playStopBtn.textContent === '▶') {
+          // Button shows play, so restart audio
+          console.log('**Play button pressed (single mode)**');
+          if (currentBlob) {
+            const text = readingUI.querySelector('textarea').value;
+            playAudio(currentBlob, text, () => {}, () => {}, currentVolume, currentSpeed, true); // skipUI = true
+          }
+        } else if (playStopBtn.textContent === '⏹') {
+          // Button shows stop, so stop audio completely
+          console.log('**Stop button pressed (single mode)**');
+          stopAllAudio();
+          playStopBtn.textContent = '▶';
+          playStopBtn.title = 'Play';
+        }
       }
     };
     // Set initial values from saved settings
-    readingUI.querySelector('#volumeSlider').value = savedVolume;
-    readingUI.querySelector('#speedSlider').value = savedSpeed;
-    currentAudio.volume = savedVolume;
-    currentAudio.playbackRate = savedSpeed;
+    const volumeSlider = readingUI.querySelector('#volumeSlider');
+    const speedSlider = readingUI.querySelector('#speedSlider');
 
-    readingUI.querySelector('#volumeSlider').oninput = async (e) => {
-      currentAudio.volume = e.target.value;
-      await setSettings({ volume: parseFloat(e.target.value) });
-    };
-    readingUI.querySelector('#speedSlider').oninput = async (e) => {
-      currentAudio.playbackRate = e.target.value;
-      await setSettings({ speed: parseFloat(e.target.value) });
-    };
+    if (volumeSlider) {
+      volumeSlider.value = savedVolume;
+      currentVolume = savedVolume; // Initialize global
+    }
+
+    if (speedSlider) {
+      speedSlider.value = savedSpeed;
+      currentSpeed = savedSpeed; // Initialize global
+    }
+
+    // Set audio properties if audio exists (for single chunk or resumed playback)
+    if (currentGain) {
+      currentGain.gain.value = currentVolume;
+    }
+    if (currentBufferSource) {
+      currentBufferSource.playbackRate.value = currentSpeed;
+    }
+
+    if (volumeSlider) {
+      volumeSlider.oninput = async (e) => {
+        const volumeValue = parseFloat(e.target.value);
+        currentVolume = volumeValue; // Store globally for future chunks
+        if (currentGain) {
+          currentGain.gain.value = volumeValue;
+        }
+        await setSettings({ volume: volumeValue });
+      };
+    }
+
+    if (speedSlider) {
+      speedSlider.oninput = async (e) => {
+        const speedValue = parseFloat(e.target.value);
+        currentSpeed = speedValue; // Store globally for future chunks
+        if (currentBufferSource) {
+          currentBufferSource.playbackRate.value = speedValue;
+        }
+        await setSettings({ speed: speedValue });
+      };
+    }
   }
 
   document.body.appendChild(readingUI);
 }
 
-function hideReadingUI() {
+function hideReadingUI(shouldStopAudio = true) {
   if (readingUI) {
     readingUI.remove();
     readingUI = null;
+  }
+  // Only stop audio if explicitly requested (e.g., when closing the UI)
+  if (shouldStopAudio) {
+    stopAllAudio();
   }
 }
 
@@ -573,6 +569,9 @@ function setupDragFunctionality() {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('**Content: Message received**', request.action);
   switch (request.action) {
+    case 'ping':
+      sendResponse({ pong: true });
+      break;
     case 'initiateTTS':
       initiateTTS(request.text);
       sendResponse({ success: true });
@@ -584,6 +583,59 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       break;
   }
 });
+
+// Text chunking utility - optimized for fast first chunk
+function splitTextIntoChunks(text, maxChunkSize = 500) {
+  const chunks = [];
+
+  // Step 1: Extract first 2 sentences as ultra-fast first chunk
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  if (sentences.length >= 2) {
+    // First chunk: first 2 sentences
+    const firstChunk = sentences[0].trim() + '. ' + sentences[1].trim() + '.';
+    chunks.push(firstChunk);
+
+    // Remaining text after first 2 sentences
+    const remainingText = text.substring(text.indexOf(sentences[2] || ''));
+    if (remainingText.trim()) {
+      // Split remaining text into ~500 char chunks at sentence boundaries
+      const remainingSentences = remainingText.split(/[.!?]+/).filter(s => s.trim().length > 0);
+      let currentChunk = '';
+
+      for (const sentence of remainingSentences) {
+        const trimmedSentence = sentence.trim();
+        if (!trimmedSentence) continue;
+
+        if ((currentChunk + trimmedSentence).length <= maxChunkSize) {
+          currentChunk += (currentChunk ? ' ' : '') + trimmedSentence;
+        } else {
+          if (currentChunk) chunks.push(currentChunk.trim() + '.');
+          currentChunk = trimmedSentence;
+        }
+      }
+
+      if (currentChunk) chunks.push(currentChunk.trim() + '.');
+    }
+  } else {
+    // Fallback: if less than 2 sentences, use original logic
+    let currentChunk = '';
+    for (const sentence of sentences) {
+      const trimmedSentence = sentence.trim();
+      if (!trimmedSentence) continue;
+
+      if ((currentChunk + trimmedSentence).length <= maxChunkSize) {
+        currentChunk += (currentChunk ? ' ' : '') + trimmedSentence;
+      } else {
+        if (currentChunk) chunks.push(currentChunk.trim() + '.');
+        currentChunk = trimmedSentence;
+      }
+    }
+
+    if (currentChunk) chunks.push(currentChunk.trim() + '.');
+  }
+
+  return chunks;
+}
 
 async function initiateTTS(text) {
   console.log('**TTS initiated** for text:', text.substring(0, 50) + '...');
@@ -607,22 +659,230 @@ async function initiateTTS(text) {
     console.log('API key and voice saved');
   }
 
-  if (text.length > 5000) {
-    console.error('**Text too long**');
+  // Check if text needs chunking - lower threshold for faster first chunk
+  const chunks = text.length > 500 ? splitTextIntoChunks(text) : [text];
+
+  if (chunks.length > 1) {
+    console.log(`**Long text detected: ${chunks.length} chunks**`);
+    await initiateChunkedTTS(chunks, voiceId, apiKey, savedVolume, savedSpeed);
+  } else {
+    // Single chunk - use existing logic
+    showReadingUI(text, true); // IMMEDIATE loading popup
+
+    try {
+      const blob = await generateTTS(text, voiceId, apiKey);
+      console.log('**TTS blob ready**, size:', blob.size);
+
+      // Play audio
+      playAudio(blob, text, showReadingUI, hideReadingUI, savedVolume, savedSpeed);
+
+    } catch (error) {
+      console.error('**TTS failed**:', error);
+      hideReadingUI();
+    }
+  }
+}
+
+// Chunked TTS processing
+async function initiateChunkedTTS(chunks, voiceId, apiKey, savedVolume, savedSpeed) {
+  // Initialize queue
+  readingQueue = {
+    chunks: chunks,
+    currentIndex: 0,
+    status: 'processing',
+    audioBuffers: new Array(chunks.length).fill(null),
+    processingIndex: 0
+  };
+
+  console.log(`**Starting chunked TTS: ${chunks.length} chunks**`);
+
+  // Show full UI immediately with queue indicator (not loading state)
+  showReadingUI(chunks[0], false, savedVolume, savedSpeed, true); // false = not loading, true = chunked mode
+
+  // Start processing chunks asynchronously
+  processChunksAsync(chunks, voiceId, apiKey, savedVolume, savedSpeed);
+}
+
+// Process chunks asynchronously - start playing first chunk as soon as ready
+async function processChunksAsync(chunks, voiceId, apiKey, savedVolume, savedSpeed) {
+  try {
+    for (let i = 0; i < chunks.length; i++) {
+      console.log(`**Processing chunk ${i + 1}/${chunks.length}**`);
+
+      const blob = await generateTTS(chunks[i], voiceId, apiKey);
+      readingQueue.audioBuffers[i] = blob;
+      readingQueue.processingIndex = i + 1;
+
+      console.log(`**Chunk ${i + 1} ready, size: ${blob.size}**`);
+
+      // If this is the first chunk, start playing immediately
+      if (i === 0) {
+        readingQueue.status = 'playing';
+        await playChunkedAudio(savedVolume, savedSpeed);
+      }
+
+      // Update UI progress
+      updateQueueProgress();
+    }
+
+    readingQueue.status = 'idle'; // All processed
+    updateQueueProgress();
+
+  } catch (error) {
+    console.error('**Chunked TTS failed**:', error);
+    readingQueue.status = 'error';
+    updateQueueProgress();
+  }
+}
+
+// Update queue progress in UI
+function updateQueueProgress() {
+  if (!readingUI) return;
+
+  const progressFill = readingUI.querySelector('#progressFill');
+  const progressText = readingUI.querySelector('#progressText');
+
+  if (progressFill && progressText) {
+    const totalChunks = readingQueue.chunks.length;
+    const processedChunks = readingQueue.processingIndex;
+    const currentChunk = readingQueue.currentIndex + 1;
+
+    const progressPercent = (processedChunks / totalChunks) * 100;
+    progressFill.style.width = `${progressPercent}%`;
+
+    if (readingQueue.status === 'playing') {
+      if (currentChunk === 1) {
+        progressText.textContent = `Playing... (${processedChunks}/${totalChunks} ready)`;
+      } else {
+        progressText.textContent = `Playing chunk ${currentChunk} of ${totalChunks}`;
+      }
+    } else if (readingQueue.status === 'processing') {
+      progressText.textContent = `Loading... (${processedChunks}/${totalChunks} ready)`;
+    } else {
+      progressText.textContent = `Ready: ${totalChunks} chunks`;
+    }
+  }
+}
+
+// Play chunked audio sequentially
+async function playChunkedAudio(savedVolume, savedSpeed) {
+  if (readingQueue.audioBuffers.length === 0 || !readingQueue.audioBuffers[0]) {
+    console.error('**No audio buffer available for chunked playback**');
     return;
   }
 
-  showReadingUI(text, true); // IMMEDIATE loading popup
+  readingQueue.status = 'playing';
+  readingQueue.currentIndex = 0;
 
-  try {
-    const blob = await generateTTS(text, voiceId, apiKey);
-    console.log('**TTS blob ready**, size:', blob.size);
+  // Start playing first chunk
+  await playNextChunk(savedVolume, savedSpeed);
+}
 
-    // Play audio
-    playAudio(blob, text, showReadingUI, hideReadingUI, savedVolume, savedSpeed);
+// Play next chunk in sequence
+async function playNextChunk(savedVolume, savedSpeed) {
+  const currentIndex = readingQueue.currentIndex;
 
-  } catch (error) {
-    console.error('**TTS failed**:', error);
-    hideReadingUI();
+  if (currentIndex >= readingQueue.audioBuffers.length) {
+    // All chunks played
+    readingQueue.status = 'idle';
+    updateQueueProgress();
+    // Update button to show play icon
+    if (readingUI) {
+      const playStopBtn = readingUI.querySelector('#playStopBtn');
+      if (playStopBtn) {
+        playStopBtn.textContent = '▶';
+        playStopBtn.title = 'Play';
+      }
+    }
+    return;
+  }
+
+  const blob = readingQueue.audioBuffers[currentIndex];
+  if (!blob) {
+    console.error(`**Audio buffer for chunk ${currentIndex} not ready**`);
+    // Try next chunk
+    readingQueue.currentIndex++;
+    playNextChunk(savedVolume, savedSpeed);
+    return;
+  }
+
+  console.log(`**Playing chunk ${currentIndex + 1}/${readingQueue.audioBuffers.length}**`);
+
+  // Stop any current audio
+  stopAudio(hideReadingUI, true); // Destroy old audio before creating new one
+
+  // Initialize Web Audio API
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+
+  // Decode audio blob to AudioBuffer
+  const arrayBuffer = await blob.arrayBuffer();
+  currentAudioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+  // Create audio buffer source node
+  currentBufferSource = audioContext.createBufferSource();
+  currentBufferSource.buffer = currentAudioBuffer;
+
+  // Create gain node for volume control
+  currentGain = audioContext.createGain();
+
+  // Use stored slider values
+  currentGain.gain.value = currentVolume;
+  currentBufferSource.playbackRate.value = currentSpeed;
+
+  // Connect audio graph: source -> gain -> destination
+  currentBufferSource.connect(currentGain);
+  currentGain.connect(audioContext.destination);
+
+  // Apply current slider values immediately after creating audio
+  if (readingUI) {
+    const volumeSlider = readingUI.querySelector('#volumeSlider');
+    const speedSlider = readingUI.querySelector('#speedSlider');
+    if (volumeSlider) {
+      const sliderVolume = parseFloat(volumeSlider.value);
+      currentGain.gain.value = sliderVolume;
+      currentVolume = sliderVolume;
+    }
+    if (speedSlider) {
+      const sliderSpeed = parseFloat(speedSlider.value);
+      currentBufferSource.playbackRate.value = sliderSpeed;
+      currentSpeed = sliderSpeed;
+    }
+  }
+  // Set up event listeners
+  currentBufferSource.addEventListener('ended', async () => {
+    console.log(`**Chunk ${currentIndex + 1} ended**`);
+    if (!isStopping) {
+      // Play next chunk only if not manually stopped
+      readingQueue.currentIndex++;
+      updateQueueProgress();
+      await playNextChunk(savedVolume, savedSpeed);
+    } else {
+      // Reset the stopping flag
+      isStopping = false;
+    }
+  });
+
+  // Start playback
+  currentBufferSource.start(0);
+  isPlaying = true;
+  isStopping = false; // Reset stopping flag when starting
+
+  // Update UI for playing
+  readingQueue.status = 'playing';
+  updateQueueProgress();
+  // Update button to show stop when playing
+  if (readingUI) {
+    const playStopBtn = readingUI.querySelector('#playStopBtn');
+    if (playStopBtn) {
+      console.log('**Setting chunked button to stop icon**');
+      playStopBtn.textContent = '⏹';
+      playStopBtn.title = 'Stop';
+    } else {
+      console.log('**Chunked playStopBtn not found**');
+    }
+  } else {
+    console.log('**Chunked readingUI not set**');
   }
 }

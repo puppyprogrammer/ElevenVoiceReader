@@ -4,7 +4,7 @@
   <img src="icons/icon-128.png" alt="ElevenVoiceReader Hat Icon" width="128" height="128">
 </p>
 
-A professional Chrome/Brave extension that transforms selected text into natural, human-like speech using ElevenLabs' advanced AI voice synthesis technology. Perfect for accessibility, content consumption, and productivity.
+A professional Chrome/Brave extension that transforms selected text into natural, human-like speech using ElevenLabs' advanced AI voice synthesis technology. Features revolutionary parallel chunk processing for instant playback of long articles, making content consumption faster and more efficient than ever.
 
 ## ✨ Features
 
@@ -13,8 +13,12 @@ A professional Chrome/Brave extension that transforms selected text into natural
 - **🎨 Professional Dark Theme**: Sleek, modern UI designed for finance and professional environments
 - **🔐 Secure API Management**: Persistent storage of ElevenLabs API keys with easy setup flow
 - **🎮 Intuitive Controls**: Play, pause, stop, and adjust volume/speed with a draggable interface
-- **⚡ Fast Generation**: Real-time audio synthesis with minimal latency
-- **🔄 Seamless Restart**: Resume playback from any point without re-generating audio
+- **⚡ Ultra-Fast Chunked Processing**: Revolutionary chunking system that processes long articles in parallel for lightning-fast audio generation
+- **🚀 Instant First Chunk Playback**: Start listening immediately while remaining chunks process in the background
+- **📊 Smart Chunking Algorithm**: Automatically splits text at sentence boundaries (500 chars) for optimal processing speed and natural listening flow
+- **🔄 Real-Time Volume & Speed Control**: Adjust playback parameters instantly during audio playback using Web Audio API
+- **📈 Performance Optimized**: Parallel TTS generation with progress tracking ensures minimal wait times for long content
+- **�🔄 Seamless Playback**: Continuous audio streaming between chunks with no gaps or interruptions
 - **📱 Responsive Design**: Works across different screen sizes and zoom levels
 
 ## 🚀 Installation
@@ -57,9 +61,16 @@ A professional Chrome/Brave extension that transforms selected text into natural
 ### Advanced Controls:
 - **▶ Play/Pause**: Toggle audio playback
 - **⏹ Stop**: Stop and reset audio (allows restart)
-- **🔊 Volume**: Adjust playback volume (0-100%)
-- **⏩ Speed**: Control reading speed (0.5x - 2x)
+- **🔊 Volume**: Adjust playback volume (0-100%) in real-time during playback
+- **⏩ Speed**: Control reading speed (0.5x - 2x) with instant adjustment
 - **✕ Close**: Dismiss the reading interface
+
+### Chunked Reading Experience:
+- **Instant Start**: For long articles, the first chunk begins playing immediately
+- **Background Processing**: Remaining chunks generate in parallel while you listen
+- **Progress Tracking**: Visual progress bar shows generation and playback status
+- **Seamless Transitions**: No gaps between chunks for continuous listening
+- **Smart Splitting**: Text divided at natural sentence boundaries for optimal flow
 
 ### Keyboard Shortcuts:
 - Currently supports right-click context menu
@@ -71,7 +82,10 @@ A professional Chrome/Brave extension that transforms selected text into natural
 - **Manifest V3**: Modern Chrome extension standard
 - **Service Worker**: Background processing for context menus
 - **Content Scripts**: DOM manipulation and audio playback
-- **Web Audio API**: High-quality audio handling
+- **Parallel Chunk Processing**: Asynchronous TTS generation with progress tracking for optimal performance
+- **Smart Chunking Algorithm**: Intelligent text splitting at sentence boundaries (~500 chars) for natural audio flow
+- **Web Audio API**: Real-time volume/speed control with AudioBufferSourceNode for seamless playback
+- **Streaming Audio Pipeline**: Continuous audio streaming between chunks with zero interruption
 - **Chrome Storage**: Persistent settings and API keys
 
 ### File Structure:
