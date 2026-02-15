@@ -162,8 +162,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/elevenvoicereader/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/elevenvoicereader/discussions)
+- **Issues**: [GitHub Issues](https://github.com/puppyprogrammer/ElevenVoiceReaderV2/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/puppyprogrammer/ElevenVoiceReaderV2/discussions)
 - **ElevenLabs Support**: For API-related questions
 
 ---
