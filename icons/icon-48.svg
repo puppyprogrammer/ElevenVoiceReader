@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="#4a9eff">
-  <!-- Elf Hat -->
-  <path d="M24 6L18 18h12L24 6z" fill="#228B22"/>
-  <path d="M24 6L30 18h-12L24 6z" fill="#32CD32"/>
-  <path d="M18 18L24 30L30 18z" fill="#228B22"/>
-  <circle cx="24" cy="33" r="3" fill="#FFD700"/>
-  <path d="M21 36Q24 39 27 36" stroke="#FFD700" stroke-width="1.5" fill="none"/>
-</svg>
