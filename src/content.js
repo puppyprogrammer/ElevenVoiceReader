@@ -456,7 +456,6 @@ function showReadingUI(text, isLoading = false, savedVolume = 1, savedSpeed = 1)
         </div>
       </div>
       <div class="footer">
-        <button id="cancelBtn">Close</button>
         <div class="github-link">
           Source Code Available on <a href="https://github.com/puppyprogrammer/ElevenVoiceReader" target="_blank">GitHub</a>
         </div>
@@ -505,7 +504,6 @@ function showReadingUI(text, isLoading = false, savedVolume = 1, savedSpeed = 1)
       currentAudio.playbackRate = e.target.value;
       await setSettings({ speed: parseFloat(e.target.value) });
     };
-    readingUI.querySelector('#cancelBtn').onclick = hideReadingUI;
   }
 
   document.body.appendChild(readingUI);
