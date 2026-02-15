@@ -457,6 +457,9 @@ function showReadingUI(text, isLoading = false, savedVolume = 1, savedSpeed = 1)
       </div>
       <div class="footer">
         <button id="cancelBtn">Close</button>
+        <div class="github-link">
+          Source Code Available on <a href="https://github.com/puppyprogrammer/ElevenVoiceReader" target="_blank">GitHub</a>
+        </div>
       </div>
     `;
 
