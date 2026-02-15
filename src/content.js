@@ -436,7 +436,16 @@ function showReadingUI(text, isLoading = false, savedVolume = 1, savedSpeed = 1)
   } else {
     readingUI.innerHTML = `
       <div class="header">
-        <span class="title">ElevenVoiceReader</span>
+        <div class="title-group">
+          <svg class="elf-hat-icon" viewBox="0 0 16 16" width="16" height="16" fill="#4a9eff">
+            <path d="M8 2L6 6h4L8 2z" fill="#228B22"/>
+            <path d="M8 2L10 6h-4L8 2z" fill="#32CD32"/>
+            <path d="M6 6L8 10L10 6z" fill="#228B22"/>
+            <circle cx="8" cy="11" r="1" fill="#FFD700"/>
+            <path d="M7 12Q8 13 9 12" stroke="#FFD700" stroke-width="0.5" fill="none"/>
+          </svg>
+          <span class="title">ElevenVoiceReader</span>
+        </div>
         <button class="close-btn" id="closeBtn">×</button>
       </div>
       <div class="content">

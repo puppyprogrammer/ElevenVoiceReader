@@ -86,6 +86,12 @@
   user-select: none;
 }
 
+#elevenvoicereader-ui .header .title-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 #elevenvoicereader-ui .header .title {
   font-weight: 600;
   font-size: 14px;
