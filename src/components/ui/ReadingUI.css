@@ -1,0 +1,250 @@
+/* CSS Variables for Dark Professional Theme */
+:root {
+  --primary-color: #4a9eff;
+  --success-color: #34c759;
+  --secondary-color: #8e8e93;
+  --danger-color: #ff3b30;
+  --dark-bg: rgba(28, 28, 30, 0.95);
+  --darker-bg: rgba(44, 44, 46, 0.95);
+  --light-text: #f2f2f7;
+  --medium-text: #98989d;
+  --border-color: rgba(142, 142, 147, 0.3);
+  --shadow: 0 4px 20px rgba(0,0,0,0.3);
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#elevenvoicereader-ui {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10000;
+  width: 500px;
+  height: 350px;
+  background: var(--dark-bg);
+  backdrop-filter: blur(20px);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+  font-family: var(--font-family);
+  color: var(--light-text);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#elevenvoicereader-ui .loading {
+  text-align: center;
+  padding: 40px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#elevenvoicereader-ui .loading .icon {
+  font-size: 32px;
+  margin-bottom: 16px;
+  color: var(--primary-color);
+}
+
+#elevenvoicereader-ui .loading .text {
+  font-size: 14px;
+  margin-bottom: 16px;
+  color: var(--light-text);
+  font-weight: 500;
+}
+
+#elevenvoicereader-ui .loading .spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(142, 142, 147, 0.3);
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#elevenvoicereader-ui .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--darker-bg);
+  border-bottom: 1px solid var(--border-color);
+  cursor: move;
+  user-select: none;
+}
+
+#elevenvoicereader-ui .header .title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--light-text);
+  margin: 0;
+}
+
+#elevenvoicereader-ui .close-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--medium-text);
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+#elevenvoicereader-ui .close-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--light-text);
+}
+
+#elevenvoicereader-ui .content {
+  flex: 1;
+  padding: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#elevenvoicereader-ui .text-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+#elevenvoicereader-ui .text-area textarea {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-family: var(--font-family);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--light-text);
+  background: var(--darker-bg);
+  resize: none;
+  overflow-y: auto;
+  box-sizing: border-box;
+  cursor: text;
+}
+
+#elevenvoicereader-ui .text-area textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+#elevenvoicereader-ui .controls-section {
+  padding: 8px 12px;
+  background: var(--darker-bg);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#elevenvoicereader-ui .controls-section button {
+  width: 32px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+#elevenvoicereader-ui .controls-section button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+#elevenvoicereader-ui #playStopBtn {
+  background: var(--primary-color);
+  color: white;
+}
+
+#elevenvoicereader-ui .control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 80px;
+}
+
+#elevenvoicereader-ui .control-group label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--medium-text);
+  text-align: center;
+}
+
+#elevenvoicereader-ui .control-group input {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(142, 142, 147, 0.3);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+#elevenvoicereader-ui .control-group input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+#elevenvoicereader-ui .control-group input::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+#elevenvoicereader-ui .footer {
+  padding: 8px 12px;
+  background: var(--darker-bg);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+}
+
+#elevenvoicereader-ui #cancelBtn {
+  padding: 6px 12px;
+  background: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+#elevenvoicereader-ui #cancelBtn:hover {
+  background: rgba(142, 142, 147, 0.8);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}

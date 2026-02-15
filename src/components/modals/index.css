@@ -1,0 +1,115 @@
+/* Shared Modal Styles for components/modals */
+
+/* CSS Variables for Dark Professional Theme */
+:root {
+  --primary-color: #4a9eff;
+  --success-color: #34c759;
+  --secondary-color: #8e8e93;
+  --danger-color: #ff3b30;
+  --dark-bg: rgba(28, 28, 30, 0.95);
+  --darker-bg: rgba(44, 44, 46, 0.95);
+  --light-text: #f2f2f7;
+  --medium-text: #98989d;
+  --border-color: rgba(142, 142, 147, 0.3);
+  --shadow: 0 4px 20px rgba(0,0,0,0.3);
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Base modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family);
+}
+
+/* Modal content container */
+.modal-content {
+  background: var(--dark-bg);
+  backdrop-filter: blur(20px);
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+}
+
+/* Common elements */
+.modal-content h3 {
+  margin-top: 0;
+  color: var(--light-text);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.modal-content p {
+  margin: 12px 0;
+  color: var(--medium-text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.modal-content input,
+.modal-content select {
+  width: 100%;
+  padding: 12px;
+  margin: 12px 0;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-sizing: border-box;
+  font-size: 14px;
+  background: var(--darker-bg);
+  color: var(--light-text);
+  transition: border-color 0.2s;
+}
+
+.modal-content input:focus,
+.modal-content select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.modal-content .buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.modal-content button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  min-width: 80px;
+}
+
+.modal-content button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Loading indicator */
+.loading {
+  font-size: 24px;
+  margin: 20px 0;
+  color: var(--primary-color);
+}
+
+/* Error text */
+.error {
+  color: var(--danger-color);
+  font-weight: 500;
+  font-size: 14px;
+}

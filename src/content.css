@@ -1,0 +1,352 @@
+/* Content Script Styles - Modals and UI */
+
+/* Professional, Minimalist Theme */
+:root {
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --light-bg: #f8f9fa;
+  --dark-text: #212529;
+  --border-color: #dee2e6;
+  --shadow: 0 2px 4px rgba(0,0,0,0.1);
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* API Key and Voice Select Modal Styles */
+.api-key-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family);
+}
+
+.api-key-modal .modal-content {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+}
+
+.api-key-modal h3 {
+  margin-top: 0;
+  color: var(--dark-text);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.api-key-modal p {
+  margin: 12px 0;
+  color: #6c757d;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.api-key-modal input {
+  width: 100%;
+  padding: 12px;
+  margin: 12px 0;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.api-key-modal input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.api-key-modal select {
+  width: 100%;
+  padding: 12px;
+  margin: 12px 0;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 14px;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.api-key-modal select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.api-key-modal .buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.api-key-modal button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  min-width: 80px;
+}
+
+.api-key-modal button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.api-key-modal #submitKey {
+  background: var(--primary-color);
+  color: white;
+}
+
+.api-key-modal #cancelKey {
+  background: var(--secondary-color);
+  color: white;
+}
+
+.api-key-modal #saveSettings {
+  background: var(--success-color);
+  color: white;
+}
+
+.api-key-modal #backKey {
+  background: var(--secondary-color);
+  color: white;
+}
+
+.api-key-modal #retryKey {
+  background: var(--warning-color);
+  color: var(--dark-text);
+}
+
+.api-key-modal .loading {
+  margin: 20px 0;
+  font-size: 24px;
+  color: var(--primary-color);
+}
+
+/* Reading UI Styles */
+#elevenvoicereader-ui {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10000;
+  width: 450px;
+  min-height: 300px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+  font-family: var(--font-family);
+  color: var(--dark-text);
+  overflow: hidden;
+  resize: both;
+  display: flex;
+  flex-direction: column;
+}
+
+#elevenvoicereader-ui .header {
+  background: var(--light-bg);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: move;
+  user-select: none;
+}
+
+#elevenvoicereader-ui .header .title {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--dark-text);
+}
+
+#elevenvoicereader-ui .close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--secondary-color);
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+#elevenvoicereader-ui .close-btn:hover {
+  background: #e9ecef;
+}
+
+#elevenvoicereader-ui .content {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#elevenvoicereader-ui .text-area {
+  flex: 1;
+  min-height: 100px;
+}
+
+#elevenvoicereader-ui .text-area textarea {
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 12px;
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+  background: var(--light-bg);
+  color: var(--dark-text);
+  transition: border-color 0.2s;
+}
+
+#elevenvoicereader-ui .text-area textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+#elevenvoicereader-ui .controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+#elevenvoicereader-ui .controls button {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: white;
+  color: var(--dark-text);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  min-width: 60px;
+}
+
+#elevenvoicereader-ui .controls button:hover {
+  background: var(--light-bg);
+  border-color: var(--primary-color);
+}
+
+#elevenvoicereader-ui #playStopBtn {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+#elevenvoicereader-ui #playStopBtn:hover {
+  background: #0056b3;
+}
+
+#elevenvoicereader-ui .sliders {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 150px;
+}
+
+#elevenvoicereader-ui .sliders label {
+  font-size: 12px;
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+#elevenvoicereader-ui .sliders input {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-color);
+  outline: none;
+  transition: background-color 0.2s;
+}
+
+#elevenvoicereader-ui .sliders input::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  cursor: pointer;
+}
+
+#elevenvoicereader-ui .sliders input::-webkit-slider-thumb:hover {
+  background: #0056b3;
+}
+
+#elevenvoicereader-ui .footer {
+  background: var(--light-bg);
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+}
+
+#elevenvoicereader-ui #cancelBtn {
+  padding: 6px 12px;
+  background: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+#elevenvoicereader-ui #cancelBtn:hover {
+  background: #545b62;
+}
+
+#elevenvoicereader-ui .loading {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+#elevenvoicereader-ui .loading .icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  color: var(--primary-color);
+}
+
+#elevenvoicereader-ui .loading .text {
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: var(--dark-text);
+}
+
+#elevenvoicereader-ui .loading .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

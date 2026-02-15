@@ -1,0 +1,26 @@
+{
+  "name": "elevenvoicereader",
+  "version": "1.0.0",
+  "description": "A Chrome extension that uses ElevenLabs API to read highlighted text aloud with professional dark theme UI",
+  "main": "src/content.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "chrome-extension",
+    "text-to-speech",
+    "elevenlabs",
+    "voice-reader",
+    "accessibility"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/elevenvoicereader.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/elevenvoicereader/issues"
+  },
+  "homepage": "https://github.com/yourusername/elevenvoicereader#readme"
+}

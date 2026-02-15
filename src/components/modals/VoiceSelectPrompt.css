@@ -1,0 +1,67 @@
+/* Voice Select Prompt Modal Styles */
+/* Extends shared modal styles with specific overrides */
+
+.api-key-modal .modal-content h3 {
+  margin-top: 0;
+  color: var(--light-text);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.api-key-modal .modal-content p {
+  margin: 12px 0;
+  color: var(--medium-text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.api-key-modal select {
+  width: 100%;
+  padding: 12px;
+  margin: 12px 0;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-sizing: border-box;
+  font-size: 14px;
+  background: var(--darker-bg);
+  color: var(--light-text);
+  transition: border-color 0.2s;
+}
+
+.api-key-modal select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.api-key-modal .buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.api-key-modal button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  min-width: 80px;
+}
+
+.api-key-modal button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.api-key-modal #saveSettings {
+  background: var(--success-color);
+  color: white;
+}
+
+.api-key-modal #backKey {
+  background: var(--secondary-color);
+  color: white;
+}
